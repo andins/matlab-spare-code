@@ -8,6 +8,9 @@
 % pvals is a vector of p-values for each null hypothesis tested.
 % q is the desired threshold.
 % corr is an optional string ('positive' or 'arbitrary') indicating if there is correlation between tests (see below).
+% bootstrapSTD is a boolean indicating whether to use bootstrap (slower) or
+% parametric method (with a binomial distribution) to estimate std of
+% number of discoveries.
 % fig_pvals is an optional boolean determining whether to plot pvalues and criterias.
 % fig_var_q is an optional boolean determining whether to plot the number
 % of total discoveries and the number of accepted false discoveries when
@@ -24,9 +27,9 @@
 % the level q but it is more conservative.
 % A resampling method can be used instead.
 %
-% TODO: implement the resampling method
+% TODO: implement the resampling method, implement the pFDR (Storey 2003)
 
-function rejectedH0s = FDR_benjHoch(pvals, q, correlation, fig_pvals, fig_var_q)
+function rejectedH0s = FDR_benjHoch(pvals, q, correlation, bootstrapSTD, fig_pvals, fig_var_q)
 
 % if pvals is row vector make it column (bootstrp samples from columns)
 if isrow(pvals)
@@ -47,10 +50,14 @@ else
 end
 
 if nargin < 4
-	fig_pvals = false;
+	bootstrapSTD = false;
 end
 
 if nargin < 5
+	fig_pvals = false;
+end
+
+if nargin < 6
 	fig_var_q = false;
 end
 
@@ -74,30 +81,33 @@ end
 
 
 if fig_var_q
-    c=0;
-    qs = [0.01, 0.05:0.05:.9];
+    count=0;
+    qs = [0.01, 0.05:0.05:1];
     rejectedH0ss = zeros(1,length(qs));
     for q_alpha = qs
-        c=c+1;
+        count=count+1;
         criteriass = q_alpha * [1:length(pvals)]' / (length(pvals)*c);
         reject = find(ordered_pval <= criteriass,1,'last');
         if ~isempty(reject)
-            rejectedH0ss(c) = reject;
+            rejectedH0ss(count) = reject;
         end
-        % calc standard dev with bootstrap
-%         bs_rej_var(c) = std(...
-%             bootstrp(10000,...
-%             @(bs_pvals) find(bs_pvals <= criteriass,1,'last'),...
-%             ordered_pval));
-        % calc standard dev parametrically (binomial)
-        % written here just for debugging and further analysis purposes
-        % in the figure the bootstrapped STD is used
-        rej_var(c) = sqrt( length(pvals)*rejectedH0ss(c)/length(pvals)*(1-rejectedH0ss(c)/length(pvals)));
+        
+        if bootstrapSTD
+            % calc standard dev with bootstrap
+            rej_var(count) = std(...
+                bootstrp(10000,...
+                @(bs_pvals) find(bs_pvals <= criteriass,1,'last'),...
+                ordered_pval));
+        else
+            % calc standard dev parametrically (binomial)
+            rej_var(count) = sqrt( length(pvals)*rejectedH0ss(count)/length(pvals)*(1-rejectedH0ss(count)/length(pvals)));
+        end
     end
     figure
     bar(qs, rejectedH0ss, 'facecolor',[.9 .9 .9],'edgecolor','k', 'linewidth',3), hold on
     errorbar(qs, rejectedH0ss, rej_var,'.','linewidth',3,'color',[.8 .2 0],'markersize',2)
     plot(qs,rejectedH0ss.*qs,'r--','linewidth',3)
+    plot(qs,rejectedH0ss - rejectedH0ss.*qs,'k','linewidth',2)
     set(gca, 'fontsize',16)
     xlabel('threshold of FDR q', 'fontsize',16)
 end
