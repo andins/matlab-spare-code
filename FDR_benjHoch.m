@@ -1,7 +1,9 @@
 % Andrea Insabato 15/01/15
+% andrea.insabato@upf.edu
+%
 % False Discovery Rate - Benjamini-Hochberg method
 %
-% rejectedH0s = FDR_benjHoch(pvals, q, corr, fig_pvals, fig_var_q)
+% rejectedH0s = FDR_benjHoch(pvals, q, corr, bootstrapSTD, fig_pvals, fig_var_q)
 %
 % Controls the False Discovery Rate of a set of tests with p-values pvals to a level q with the
 % Benjamini-Hochberg procedure.
