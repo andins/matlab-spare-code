@@ -106,8 +106,8 @@ if fig_var_q
     figure
     bar(qs, rejectedH0ss, 'facecolor',[.9 .9 .9],'edgecolor','k', 'linewidth',3), hold on
     errorbar(qs, rejectedH0ss, rej_var,'.','linewidth',3,'color',[.8 .2 0],'markersize',2)
-    h1=plot(qs,rejectedH0ss.*qs,'r--','linewidth',3)
-    h2=plot(qs,rejectedH0ss - rejectedH0ss.*qs,'k','linewidth',3)
+    h1=plot(qs,rejectedH0ss.*qs,'r--','linewidth',3);
+    h2=plot(qs,rejectedH0ss - rejectedH0ss.*qs,'k','linewidth',3);
     set(gca, 'fontsize',16)
     xlabel('threshold of FDR q', 'fontsize',16)
     legend([h1, h2], 'false discoveries', 'true discoveries')
